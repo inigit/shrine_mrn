@@ -16,6 +16,7 @@ class Shrine
         uri = URI.parse(@upload_host)
 
         path = @prefix ? "/#{@prefix}/" : ""
+        pretty_path = "#{path}#{Pathname(id).dirname.to_s}/"
 
         if io.is_a?(UploadedFile)
           file = io.download
@@ -29,11 +30,13 @@ class Shrine
 
         req = Net::HTTP::Post::Multipart.new(uri.path, {
           "filename" => UploadIO.new(file, "image/*", id),
-          "path" => path
+          "path" => pretty_path
         })
 
         http = Net::HTTP.start(uri.host, uri.port)
         response = http.request(req)
+
+        # puts "Upload Response Body: #{response.body}"
 
         response.error! if (400..599).cover?(response.code.to_i)
         response
@@ -58,7 +61,6 @@ class Shrine
 
       def url(id, **options)
         url = "#{@host}/#{object_name(id)}"
-        puts "URL: #{url}"
         url
       end
 

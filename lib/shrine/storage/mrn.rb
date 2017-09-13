@@ -6,10 +6,23 @@ class Shrine
     class Mrn
       attr_reader :prefix, :host, :upload_host
 
-      def initialize(host:, upload_host:, prefix: nil, object_options: {})
+      def initialize(host:, upload_host:, prefix: nil, **options)
         @prefix = prefix
         @host = host
         @upload_host = upload_host
+
+        @username = options[:username]
+        secret_key = options[:secret_key]
+        ip_address = options[:ip_address]
+
+        raise "Username missing" if @username.blank?
+        raise "Secret key missing" if secret_key.blank?
+        raise "IP address missing" if ip_address.blank?
+
+        unix_timestamp = Time.now.to_i.to_s
+        hashed_secret_key = Digest::MD5.hexdigest(secret_key)
+
+        @token = Digest::MD5.hexdigest(unix_timestamp + @username + hashed_secret_key + ip_address)
       end
 
       def upload(io, id, shrine_metadata: {}, **_options)
@@ -30,13 +43,15 @@ class Shrine
 
         req = Net::HTTP::Post::Multipart.new(uri.path, {
           "filename" => UploadIO.new(file, "image/*", id),
-          "path" => pretty_path
+          "path" => pretty_path,
+          "username" => @username,
+          "token" => @token
         })
 
         http = Net::HTTP.start(uri.host, uri.port)
         response = http.request(req)
 
-        # puts "Upload Response Body: #{response.body}"
+        puts "Upload Response Body: #{response.body}"
 
         response.error! if (400..599).cover?(response.code.to_i)
         response

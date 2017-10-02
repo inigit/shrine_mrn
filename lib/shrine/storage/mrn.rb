@@ -27,10 +27,8 @@ class Shrine
 
       def upload(io, id, shrine_metadata: {}, **_options)
         uri = URI.parse(@upload_host)
-
         path = @prefix ? "/#{@prefix}/" : ""
         pretty_path = "#{path}#{Pathname(id).dirname.to_s}/"
-
         if io.is_a?(UploadedFile)
           file = io.download
           # type = io.mime_type
@@ -51,21 +49,37 @@ class Shrine
         http = Net::HTTP.start(uri.host, uri.port)
         response = http.request(req)
 
-        puts "Upload Response Body: #{response.body}"
+        # puts "Upload Response Body: #{response.body}"
 
         response.error! if (400..599).cover?(response.code.to_i)
         response
       end
 
-      def download(id)
-        open(id)
-      end
+      # def download(id)
+      #   puts "*********Downloading...**********"
+      #   open(id)
+      # end
 
       def open(id)
+        # puts "*********Opening...**********"
         uri = URI.parse("#{@host}/#{object_name(id)}")
+        # puts "*********URI: #{uri}**********"
         response = Net::HTTP.get_response(uri)
-        image = StringIO.new(Base64.decode64(response.body))
-        image
+        # puts "*********RESPONSE: #{response.inspect}**********"
+        io = StringIO.new(response.body)
+        # io = StringIO.new(Base64.decode64(response))
+        io
+        # image = StringIO.new(Base64.decode64(response.body))
+        # puts "*********IMAGE: #{image.inspect}**********"
+        # image
+        # open(uri) {|f|
+        #   puts "*********F: #{f}**********"
+        #   File.open(object_name(id),"wb") do |file|
+        #     puts "*********FILE: #{file}**********"
+        #     file.puts f.read
+        #   end
+        # }
+        # uri
       end
 
       def exists?(id)

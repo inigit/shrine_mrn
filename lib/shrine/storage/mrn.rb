@@ -10,10 +10,12 @@ class Shrine
         @prefix = prefix
         @host = host
         @upload_host = upload_host
-
         @username = options[:username]
         secret_key = options[:secret_key]
         ip_address = options[:ip_address]
+
+        raise "upload_host is required" if @upload_host.blank?
+        raise "host is required" if @host.blank?
 
         raise "Username missing" if @username.blank?
         raise "Secret key missing" if secret_key.blank?

@@ -33,12 +33,10 @@ class Shrine
         pretty_path = "#{path}#{Pathname(id).dirname.to_s}/"
         if io.is_a?(UploadedFile)
           file = io.download
-          # type = io.mime_type
         elsif io.is_a?(Tempfile)
           file = io
         else
           file = io.tempfile
-          # type = io.content_type
         end
 
         req = Net::HTTP::Post::Multipart.new(uri.path, {
@@ -48,10 +46,14 @@ class Shrine
           "token" => @token
         })
 
-        http = Net::HTTP.start(uri.host, uri.port)
-        response = http.request(req)
+        if uri.scheme == "https"
+          OpenSSL::SSL.const_set(:VERIFY_PEER, OpenSSL::SSL::VERIFY_NONE)
+          http = Net::HTTP.start(uri.host, uri.port, {:use_ssl => true, :verify_mode => OpenSSL::SSL::VERIFY_NONE})
+        else
+          http = Net::HTTP.start(uri.host, uri.port)
+        end
 
-        # puts "Upload Response Body: #{response.body}"
+        response = http.request(req)
 
         response.error! if (400..599).cover?(response.code.to_i)
         response

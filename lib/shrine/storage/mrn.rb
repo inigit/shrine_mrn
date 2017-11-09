@@ -48,7 +48,7 @@ class Shrine
 
         if uri.scheme == "https"
           OpenSSL::SSL.const_set(:VERIFY_PEER, OpenSSL::SSL::VERIFY_NONE)
-          http = Net::HTTP.start(uri.host, uri.port, {:use_ssl => true, :verify_mode => OpenSSL::SSL::VERIFY_NONE})
+          http = Net::HTTP.start(uri.host, uri.port, :use_ssl => true)
         else
           http = Net::HTTP.start(uri.host, uri.port)
         end

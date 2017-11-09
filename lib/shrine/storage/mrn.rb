@@ -12,19 +12,19 @@ class Shrine
         @upload_host = upload_host
         @username = options[:username]
         secret_key = options[:secret_key]
-        ip_address = options[:ip_address]
+        @ip_address = options[:ip_address]
 
         raise "upload_host is required" if @upload_host.blank?
         raise "host is required" if @host.blank?
 
         raise "Username missing" if @username.blank?
         raise "Secret key missing" if secret_key.blank?
-        raise "IP address missing" if ip_address.blank?
+        raise "IP address missing" if @ip_address.blank?
 
         unix_timestamp = Time.now.to_i.to_s
         hashed_secret_key = Digest::MD5.hexdigest(secret_key)
 
-        @token = Digest::MD5.hexdigest(unix_timestamp + @username + hashed_secret_key + ip_address)
+        @token = Digest::MD5.hexdigest(unix_timestamp + @username + hashed_secret_key + @ip_address)
       end
 
       def upload(io, id, shrine_metadata: {}, **_options)
@@ -38,6 +38,8 @@ class Shrine
         else
           file = io.tempfile
         end
+
+        Rails.logger.info("[File]: #{file.inspect}")
 
         req = Net::HTTP::Post::Multipart.new(uri.path, {
           "filename" => UploadIO.new(file, "image/*", id),
@@ -53,7 +55,12 @@ class Shrine
           http = Net::HTTP.start(uri.host, uri.port)
         end
 
+        Rails.logger.info("[Uploading from]: #{@ip_address}")
+
         response = http.request(req)
+
+        Rails.logger.info("[Upload response code]: #{response.code}")
+        Rails.logger.info("[Upload response body]: #{response.body}")
 
         response.error! if (400..599).cover?(response.code.to_i)
         response

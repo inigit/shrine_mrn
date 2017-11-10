@@ -11,23 +11,22 @@ class Shrine
         @host = host
         @upload_host = upload_host
         @username = options[:username]
-        secret_key = options[:secret_key]
+        @secret_key = options[:secret_key]
         @ip_address = options[:ip_address]
 
         raise "upload_host is required" if @upload_host.blank?
         raise "host is required" if @host.blank?
 
         raise "Username missing" if @username.blank?
-        raise "Secret key missing" if secret_key.blank?
+        raise "Secret key missing" if @secret_key.blank?
         raise "IP address missing" if @ip_address.blank?
-
-        unix_timestamp = Time.now.to_i.to_s
-        hashed_secret_key = Digest::MD5.hexdigest(secret_key)
-
-        @token = Digest::MD5.hexdigest(unix_timestamp + @username + hashed_secret_key + @ip_address)
       end
 
       def upload(io, id, shrine_metadata: {}, **_options)
+        unix_timestamp = Time.now.to_i.to_s
+        hashed_secret_key = Digest::MD5.hexdigest(@secret_key)
+        @token = Digest::MD5.hexdigest(unix_timestamp + @username + hashed_secret_key + @ip_address)
+
         uri = URI.parse(@upload_host)
         path = @prefix ? "/#{@prefix}/" : ""
         pretty_path = "#{path}#{Pathname(id).dirname.to_s}/"

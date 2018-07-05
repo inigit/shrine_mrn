@@ -32,7 +32,7 @@ class Shrine
         pretty_path = "#{path}#{Pathname(id).dirname.to_s}/"
         if io.is_a?(UploadedFile)
           file = io.download
-        elsif io.is_a?(Tempfile)
+        elsif io.is_a?(Tempfile) || io.is_a?(File)
           file = io
         else
           file = io.tempfile
